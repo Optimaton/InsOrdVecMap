@@ -4,6 +4,7 @@
 #include <initializer_list>
 #include <utility>
 #include <memory>
+#include <cstring>
 #include <iostream>
 
 template <typename Key_, typename Tp_, 
@@ -19,6 +20,7 @@ public:
   typedef typename Allocator_::const_reference      const_reference;
   typedef typename Allocator_::difference_type      difference_type;
   typedef typename Allocator_::size_type            size_type;
+  typedef typename Allocator_::pointer              pointer;
 
   class iterator {
     public:
@@ -27,19 +29,30 @@ public:
       typedef typename Allocator_::reference        reference;
       typedef typename Allocator_::pointer          pointer;
       typedef  std::random_access_iterator_tag      iterator_category;
-
-      iterator();
-      iterator(const iterator&);
-      ~iterator();
+   
+   public:   
+      iterator() 
+      {
+          
+      }
+     
+      iterator(const iterator& rhs) 
+      {
+  
+      }
+ 
+      ~iterator()
+      {
+  
+      }
 
       iterator& operator=(const iterator& rhs)
       {
-          
       }
 
       bool operator==(const iterator& rhs) const
       {
-  
+        return *this == rhs; 
       }
 
       bool operator!=(const iterator& rhs) const
@@ -250,30 +263,41 @@ public:
   typedef std::reverse_iterator<iterator> reverse_iterator;
   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
+  void allocate()
+  {
+    array_ = std::allocator_traits<allocator_type>::allocate(alloc_, reserved_size_);
+  }
+
+  void construct(value_type item)
+  {
+    std::allocator_traits<allocator_type>::construct(alloc_, array_, item);
+  }
+
   InsOrdVecMap()
   {
-    array_ = std::allocator_traits<allocator_type>::allocate(alloc_, reserved_size_); 
+    allocate();
   }
   
-  InsOrdVecMap(const InsOrdVecMap& rhs) 
+  InsOrdVecMap(const InsOrdVecMap& rhs)
   {
     reserved_size_ = rhs.capacity();
-    array_ = std::allocator_traits<allocator_type>::allocate(alloc_, reserved_size_);
-    *this = rhs;
+    allocate();
+    memcpy(this, &rhs, sizeof(value_type) * rhs.size());
     current_size_ = rhs.size();
   }
 
   InsOrdVecMap(size_type size) 
   {
-  
+    reserved_size_ = size;
+    allocate();
   }
 
   InsOrdVecMap(std::initializer_list<std::pair<key_type, mapped_type>> ilist)
   {
       reserved_size_ = ilist.size() << 2;
-      array_ = std::allocator_traits<allocator_type>::allocate(alloc_, reserved_size_); 
+      allocate();
       for (auto& item : ilist) {
-        std::allocator_traits<allocator_type>::construct(alloc_, array_, item);
+        construct(item);
         array_++;
         current_size_++;
       }
@@ -282,12 +306,27 @@ public:
 
   ~InsOrdVecMap()
   {
-      
+    std::allocator_traits<allocator_type>::destroy(alloc_, array_);
+    std::allocator_traits<allocator_type>::deallocate(alloc_, array_, 0);
+    current_size_ = 0;
+    reserved_size_ = 0;
   }
 
+  // TODO: this is a debug function remove after use
+  void print() 
+  {
+    for (size_type i = 0; i < current_size_; i++) {
+      std::cout << "pointer addr: " << (array_ + i) << std::endl;
+      std::cout << array_[i].first << "::" << array_[i].second << "\n";
+    }
+  }
   InsOrdVecMap& operator=(const InsOrdVecMap& rhs)
   {
-    
+    reserved_size_ = rhs.capacity();
+    allocate();
+    *this = rhs;
+    current_size_ = rhs.size();
+    return *this;
   }
 
   bool operator==(const InsOrdVecMap& rhs) const
@@ -424,22 +463,42 @@ public:
 
   void push_back(const std::pair<key_type, mapped_type>& elem)
   {
-  
+    if (current_size_ == reserved_size_) {
+      reserved_size_ <<= 2;
+      pointer tmp_array = (pointer)realloc(array_, sizeof(value_type) * reserved_size_);
+      memcpy(tmp_array, array_, current_size_ * sizeof(value_type));
+      delete[] array_;
+      array_ = tmp_array;
+    } 
+    array_[current_size_] = elem; 
+    current_size_++;
   }
 
   void push_back(const std::pair<key_type, mapped_type>&& elem) 
   {
-  
+    if (current_size_ == reserved_size_) {
+      reserved_size_ <<= 2;
+      pointer tmp_array = (pointer)realloc(array_, sizeof(value_type) * reserved_size_);
+      memcpy(tmp_array, array_, current_size_ * sizeof(value_type));
+      delete[] array_;
+      array_ = tmp_array;
+    } 
+    memcpy(array_ + current_size_, &elem, sizeof(elem));
+    current_size_++;
   }
 
   void pop_front()
   {
-  
+    array_ = array_ + 1;
+    current_size_--;
   }
 
   void pop_back()
   {
-  
+    pointer tmp_array = array_ + current_size_ - 1;
+    tmp_array = nullptr;
+    current_size_--;
+    reserved_size_ = current_size_;
   }
 
 
@@ -455,12 +514,12 @@ public:
 
   reference at(size_type idx) const
   {
-
+    return *(array_ + idx);
   }
   
   const_reference at(size_type idx)
   {
-  
+    return *(array_ + idx); 
   }
 
   template <class ...Args>
@@ -509,7 +568,7 @@ public:
 
   void clear()
   {
-  
+    current_size_ = 0;  
   }
 
   template <class ForwardIter>
@@ -532,7 +591,7 @@ public:
 
   void swap(InsOrdVecMap& insOrdVecMap) 
   {
-  
+    std::swap(*this, insOrdVecMap); 
   }
 
   size_type size() const
@@ -547,21 +606,21 @@ public:
 
   size_type max_size()const
   {
-  
+    return alloc_.max_size(); 
   }
 
   bool empty() const
   {
-  
+    return current_size_;
   }
 
   Allocator_ get_allocator() const
   {
-  
+    return alloc_;  
   }
 private:
   allocator_type alloc_;
-  value_type* array_;
+  pointer array_;
   size_type reserved_size_ = 4;
   size_type current_size_ = 0;
 };
