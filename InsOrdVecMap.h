@@ -504,14 +504,22 @@ public:
   }
 
 
-  reference operator[](key_type key_value) const
+  mapped_type& operator[](key_type key_value) const
   {
-    
+    for (size_type i = 0; i < current_size_; i++) {
+      if (array_[i].first == key_value) {
+        return array_[i].second;
+      }
+    }
   }
 
-  const_reference operator[](key_type key_value) 
+  mapped_type& operator[](key_type key_value) 
   {
-  
+     for (size_type i = 0; i < current_size_; i++) {
+       if (array_[i].first == key_value) {
+         return array_[i].second;
+       }
+     }
   }
 
   reference at(size_type idx) const

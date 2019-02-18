@@ -25,7 +25,9 @@ int main()
   std::cout << "Current Size:" << insOrdVecMap1.size() << std::endl;
   std::cout << "Capacity: " << insOrdVecMap1.capacity() << std::endl;
   std::cout << "Value at 3 is: " << insOrdVecMap1.at(2).first << "::" << insOrdVecMap1.at(2).second << std::endl;
-
+  std::cout << "Value of inOrdVecMap[\"adam\"] is " << insOrdVecMap["adam"] << std::endl;
+  insOrdVecMap["sam"].assign(std::string("raghu"));
+  std::cout << "Value of inOrdVecMap[\"sam\"] is " << insOrdVecMap["sam"] << std::endl;
   insOrdVecMap1.print();
 
 
