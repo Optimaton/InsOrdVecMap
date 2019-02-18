@@ -307,7 +307,7 @@ public:
   ~InsOrdVecMap()
   {
     std::allocator_traits<allocator_type>::destroy(alloc_, array_);
-    std::allocator_traits<allocator_type>::deallocate(alloc_, array_, 0);
+    std::allocator_traits<allocator_type>::deallocate(alloc_, array_, reserved_size_);
     current_size_ = 0;
     reserved_size_ = 0;
   }
@@ -316,7 +316,6 @@ public:
   void print() 
   {
     for (size_type i = 0; i < current_size_; i++) {
-      std::cout << "pointer addr: " << (array_ + i) << std::endl;
       std::cout << array_[i].first << "::" << array_[i].second << "\n";
     }
   }
@@ -487,18 +486,21 @@ public:
     current_size_++;
   }
 
-  void pop_front()
-  {
-    array_ = array_ + 1;
-    current_size_--;
-  }
-
   void pop_back()
   {
     pointer tmp_array = array_ + current_size_ - 1;
     tmp_array = nullptr;
     current_size_--;
     reserved_size_ = current_size_;
+  }
+
+  void pop_front()
+  {
+    //for (int i = 1; i < current_size_; i++) {
+      //memcpy(const_cast<key_type*>(&((array_ + i - 1)->first)), const_cast<key_type*>(&((array_ + i)->first)), sizeof(key_type));
+      //memcpy(const_cast<mapped_type*>(&((array_ + i - 1)->second)), const_cast<mapped_type*>(&((array_ + i)->second)), sizeof(mapped_type));
+    //}
+    //pop_back();
   }
 
 

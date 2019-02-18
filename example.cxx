@@ -4,10 +4,10 @@
 int main()
 {
   InsOrdVecMap<std::string, std::string> insOrdVecMap {
-    {"raghu", "boy"},
-    {"megha","girl"},
-    {"shiva", "boy"},
-    {"lalitha", "girl"}
+    {"john", "male"},
+    {"natasha","female"},
+    {"sam", "male"},
+    {"adam", "male"}
   };
 
   std::cout << "insOrdVecMap: " << std::endl;
@@ -19,7 +19,7 @@ int main()
   std::cout << "\n";
 
   decltype(insOrdVecMap) insOrdVecMap1 = insOrdVecMap;
-  insOrdVecMap1.push_back(std::make_pair("raj", "simran")); //debug function
+  insOrdVecMap1.push_back(std::make_pair("rene", "female")); //debug function
 
   std::cout << "insOrdVecMap1: " << std::endl;
   std::cout << "Current Size:" << insOrdVecMap1.size() << std::endl;
